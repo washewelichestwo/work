@@ -1,4 +1,3 @@
-
 (($, sr) => {
 
   // debouncing function from John Hann
@@ -56,9 +55,11 @@ const GRVE = GRVE || {};
   GRVE.documentReady = {
     init() {
       GRVE.outlineJS.init()
-      GRVE.dayTrips.init()
+      GRVE.anchorScroll.init('a[data-scroll][href*="#"]:not([href="#"])')
       GRVE.pageSettings.init()
       GRVE.basicElements.init()
+      GRVE.phoneMask.init()
+      GRVE.ajax.init()
     }
   }
 
@@ -83,7 +84,6 @@ const GRVE = GRVE || {};
   GRVE.documentLoad = {
     init() {
 
-      GRVE.dayTrips.scroll()
     }
   }
 
@@ -143,162 +143,184 @@ const GRVE = GRVE || {};
     }
   }
 
-  // # Day Trips
+  // # Anchor scrolling effect
   // ============================================================================= //
-  GRVE.dayTrips = {
+  GRVE.anchorScroll = {
+    init(selector) {
+      const $selector = $(selector)
+
+      if (!$selector.length) return
+
+      $selector.on('click', () => {
+        if (location.pathname.replace(/^\//, '') == this.pathname.replace(/^\//, '') && location.hostname == this.hostname) {
+          let target = $(this.hash)
+          target = target.length ? target : $(`[name=${this.hash.slice(1)}]`)
+
+          if (target.length) {
+            $('html, body').animate({
+              scrollTop: (target.offset().top + 3)
+            }, 1000)
+            return false
+          }
+        }
+      })
+    }
+  }
+
+  // # Phone masked input
+  // ============================================================================= //
+  GRVE.phoneMask = {
     init() {
-      this.sort()
-    },
-    scroll() {
-      const $slider =      $('.my-trips-list')
-      const $cards =       $('.trips-for-day')
-      const windowHeight = $(window).height()
+      $('[type="tel"]').mask('+38 (099) 999 99 99')
+    }
+  }
 
-      if(GRVE.isWindowSize.init(0, 680)) return false
+// # Ajax send Form
+  // ============================================================================= //
+  GRVE.ajax = {
+    init() {
+      const self = this
+      const parsleyOptions = {
+        excluded:                'input[type=button], input[type=submit], input[type=reset], [disabled]',
+        successClass:            'form-group--success',
+        errorClass:              'form-group--error',
+        errorsMessagesDisabled:  true,
+        minlength:               2,
+        classHandler(el) {
+          return el.$element.closest(".form-group")
+        }
+      }
+      this.customValidation()
+      const $forms = $('.js-form')
 
-      $slider.owlCarousel({
-          autoWidth: true
-      })
+      if (!$forms.length) return false
+      $forms.parsley(parsleyOptions)
+      $forms.on('submit', function(e) {
+        const $form = $(this)
+        $form.parsley().validate()
 
-      $cards.each((i, item) => {
-          const $this =         $(item)
-          const cardHeight =    $this.outerHeight()
-          const cardOffsetTop = $this.offset().top
-          const maxHeight =     windowHeight - cardOffsetTop
-          const cardStyles =    {
-            'height':   maxHeight,
-            'overflow': 'visible'
-          }
-
-          const mCustomScrollbarOptions = {
-            setTop: 0,
-            setHeight: maxHeight,
-            advanced: { 
-              updateOnContentResize: true,
-            }
-          }
-
-          if(cardHeight > maxHeight) {
-            //$this.css(cardStyles)
-
-            setTimeout(() => {
-              $this.mCustomScrollbar(mCustomScrollbarOptions)
-            }, 50) // WTF??? How it works?
-          }
-      })
-    },
-    sort() {
-      const $controls =                   $(".trips-sort")
-      const $tabs =                       $("#trip-list")
-      const controlsActiveClassName =     'trips-sort--active'
-      const tabsItemsActiveClassName =    'my-trips-list--active'
-
-
-      $controls.on("click", function(e) {
-        const $this =          $(this)
-        const target =         '#' + $this.data('tab')
-        const $tabsItem =      $(target)
-        const isOpenControl =  $this.is(`.${controlsActiveClassName}`)
+        if ($form.parsley().isValid()) {
+          self.send( $(this) )
+        }
 
         e.preventDefault()
+      })
+    },
+    send($form) {
+      const self =        this
 
-        if (isOpenControl) return
+      const isWP =        $form.is("[data-form-ajax=\"wp\"]")
+      const $submit =     $form.find('[type=submit]')
+      const url =         isWP ? '/wp-admin/admin-ajax.php' : $form.attr('action')
+      const type =        ($form.attr('method')) ? $form.attr('method') : 'post'
+      const data =        new FormData($form[0])
+      const formName =    $submit.val()
+      const redirect =    $form.data("redirect")
 
-        $this
-          .addClass(controlsActiveClassName)
-          .siblings()
-          .removeClass(controlsActiveClassName)
+      this.$result =      $form.find('.result')
+      this.$submit =      $submit
 
+      isWP && data.append('action', 'site_form')
+      data.append('form', formName)
 
-
-        $.ajax({
-            url: '/my-trips-orders',
-            type: 'get',
-            data: {'type': $($this).data('type')},
-            beforeSend() {
-              $tabs.addClass('loading')
+      $.ajax({
+        url:              url,
+        type:             type,
+        data,
+        dataType:         'json',
+        processData:      false,
+        contentType:      false,
+        cache:            false,
+        beforeSend() {
+          self.progress('hide')
+        },
+        complete() {
+          self.progress('show')
+        },
+        success(data) {
+          if (!data.success) {
+            const error = "Возникли проблемы с сервером. Сообщите нам о ошибке, мы постараемся устранить её в ближайшее время."
+            console.log(error)
+            self.submitFail(error)
+          } else if (data.success) {
+            $('.modal').modal('hide')
+            $('#success').modal('show')
+            if (redirect || data.redirect) {
+              document.location.href = redirect
             }
-        }).done((data) => {
-          tabsSwitchItems(data)
-        }).fail(() => {
-            console.log("error")
-        })
+            $form.trigger("reset")
+          }
+        },
 
-        tabsSwitchItems = (data) => {
-          $tabs
-            .animate({'opacity':'0', 'top':'50px'}, 1000, function() {
-              $tabs.html(data)
-              GRVE.dayTrips.scroll()
-              $tabs.animate({'opacity':'1', 'top':'0'}, 1000)
-
-            })
+        error(XMLHttpRequest, textStatus, errorThrown) {
+          self.submitFail(textStatus || errorThrown)
         }
       })
     },
-    
+    submitFail(msg) {
+      this.alert(msg, "danger")
+      return false
+    },
+    submitDone(msg) {
+      this.alert(msg, "success")
+      return true
+    },
+    alert(msg, status) {
+      const self =   this
+      const $alert = `<div class="alert alert-${status} alert-dismissable fade show" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times</span></button>${msg}</div>`
 
-
+      this.$result.html($alert)
+      if (status === "success") {
+        setTimeout(() => {
+          self.$result.slideUp(() => {
+            self.$result.html('')
+          })
+        }, 3000)
+      }
+    },
+    progress(status) {
+      if (status === 'hide') {
+        this.$submit.prop('disabled', true)
+      } else if (status === 'show') {
+        this.$submit.prop('disabled', false)
+      }
+    },
+    customValidation() {
+      window.Parsley.addValidator('robots', {
+        validateString(value) {
+          return (value === '') ? true : false
+        }
+      })
+    },
   }
-
 
   // # Page Settings
   // ============================================================================= //
   GRVE.pageSettings = {
     init() {
       this.svgPolifill()
-      this.dropdown()
-      this.fancybox()
-      this.radiogroup()
+      //this.rangeSlider("[data-range-slider]")
     },
     svgPolifill() {
       svg4everybody()
     },
-    dropdown() {
-      const $dropdown = $("[data-dropdown]")
-      const $control =  $("[data-dropdown-control]")
+    rangeSlider(target) {
+      const $rangeSlider =  $(target)
 
-      $dropdown.on("click", $control, function() {
-        const $this =     $(this)
-        const target =    $this.data("dropdown-target")
-        const $content =  $(target)
-        const $links =    $content.find("a")
+      const min =      ( parseInt( $rangeSlider.attr("min")) ) ? parseInt( $rangeSlider.attr("min") ) : 0
+      const max =      ( parseInt( $rangeSlider.attr("max")) ) ? parseInt( $rangeSlider.attr("max") ) : 1
+      const step =     ( parseInt( $rangeSlider.attr("step")) ) ? parseInt( $rangeSlider.attr("step") ) : 1
+      const from =    ( parseInt( $rangeSlider.attr("value")) ) ? parseInt( $rangeSlider.attr("value") ) : 0
 
-
-
-
-        e.preventDefault()
-      })
-    },
-    fancybox() {
-      const $control = $("[data-fancybox]")
-
-      $control.fancybox({
-        smallBtn: false,
-        infobar : false,
-        buttons : false
-      })
-    },
-    radiogroup() {
-      const $control =        $("[data-radiogroup]")
-      const activeClassName = "form__btn"
-
-      $control.on("click", function(e) {
-        const $this =    $(this)
-        const isActive = $this.is(`:not(.${activeClassName})`)
-
-        console.log(isActive)
-
-        if (isActive) return false
-
-        $this
-          .removeClass(activeClassName)
-          .parent()
-          .siblings()
-          .find("[data-radiogroup]")
-          .addClass(activeClassName)
-
-        e.preventDefault()
-      })
+      $rangeSlider.ionRangeSlider({
+        type: "single",
+        grid: false,
+        step: step,
+        min: min,
+        max: max,
+        from: from,
+        hide_min_max: true,
+      });
     }
   }
 
@@ -308,6 +330,65 @@ const GRVE = GRVE || {};
   GRVE.basicElements = {
     init() {
 
+    },
+    carousel() {
+
+      const $element = $('.js-carousel')
+
+      $element.each(function(){
+
+        const $carousel =     $(this)
+        const $nextNav =      $carousel.find('.js-carousel-next')
+        const $prevNav =      $carousel.find('.js-carousel-prev')
+        const sliderSpeed =   ( parseInt( $carousel.attr('data-slider-speed') ) ) ? parseInt( $carousel.attr('data-slider-speed') ) : 3000
+        const pagination = $carousel.attr('data-pagination') != 'no' ? true : false
+        const paginationSpeed = ( parseInt( $carousel.attr('data-pagination-speed') ) ) ? parseInt( $carousel.attr('data-pagination-speed') ) : 400
+        const autoHeight = $carousel.attr('data-slider-autoheight') == 'yes' ? true : false
+        const autoPlay = $carousel.attr('data-slider-autoplay') != 'no' ? true : false
+        const sliderPause = $carousel.attr('data-slider-pause') == 'yes' ? true : false
+        const loop = $carousel.attr('data-slider-loop') != 'no' ? true : false
+        const itemNum = parseInt( $carousel.attr('data-items'))
+        const tabletLandscapeNum = $carousel.attr('data-items-tablet-landscape') ? parseInt( $carousel.attr('data-items-tablet-landscape')) : 3
+        const tabletPortraitNum = $carousel.attr('data-items-tablet-portrait') ? parseInt( $carousel.attr('data-items-tablet-portrait')) : 3
+        const mobileNum = $carousel.attr('data-items-mobile') ? parseInt( $carousel.attr('data-items-mobile')) : 1
+        const gap = $carousel.hasClass('js-with-gap') && !isNaN( $carousel.data('gutter-size') ) ? Math.abs( $carousel.data('gutter-size') ) : 0
+
+        // Carousel Init
+        $carousel.owlCarousel({
+          loop,
+          autoplay : autoPlay,
+          autoplayTimeout : sliderSpeed,
+          autoplayHoverPause : sliderPause,
+          smartSpeed : 500,
+          dots : pagination,
+          responsive : {
+            0 : {
+              items : mobileNum
+            },
+            768 : {
+              items : tabletPortraitNum
+            },
+            1024 : {
+              items : tabletLandscapeNum
+            },
+            1200 : {
+              items : itemNum
+            }
+          },
+          margin : gap
+        })
+
+        $carousel.css('visibility','visible')
+
+        // Go to the next item
+        $nextNav.click(() => {
+          $carousel.trigger('next.owl.carousel')
+        })
+        // Go to the previous item
+        $prevNav.click(() => {
+          $carousel.trigger('prev.owl.carousel')
+        })
+      })
     },
     wowjs() {
       var wow = new WOW({
