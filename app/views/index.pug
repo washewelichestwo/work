@@ -2,15 +2,15 @@ extends base/_layout.pug
 block variables
 
 block header
+  include partials/_header.pug
 block content
-  article.intro
-    include partials/_header.pug
-    include partials/_home-intro.pug
+ 
+  include partials/_home-intro.pug
   
 block footer
   include partials/_footer.pug
 block modal
-  include partials/_modal.pug
+//- include partials/_modal.pug
 
 block styles
 
