@@ -1,0 +1,20 @@
+section.order
+  .container
+    .row.justify-content-end
+      .col-lg-16
+        .price.order__price
+          p.price__text Заказать умные часы со скидкой
+          span.price-new.price__new за 
+            mark 1260
+            |  грн
+          span.price-old.price__old 1960 грн
+        form.form
+          .form__wrapper
+            .form__group.form-group.form__group--1
+              input.form-control.form__control(type="text", name="name", placeholder="Имя", required)
+            .form__group.form-group.form__group--2
+              input.form-control.form__control(type="tel", name="phone", placeholder="Телефон", required)
+            .form__group.form__group--3
+              button.btn.btn--secondary.form__submit.btn--fluid(type="submit") Купить
+
+            

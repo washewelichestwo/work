@@ -24,11 +24,12 @@
   animation: progress-bar-stripes 2s linear infinite
   background-image: $btn-submit-loading-bg
   background-size: 40px 40px
-@keyframes progress-bar-stripes
+//@keyframes progress-bar-stripes
   from
     background-position: 40px 0
   to
     background-position: 0 0
+
 +cm('modal')
 .modal
   -webkit-overflow-scrolling: touch
@@ -90,9 +91,12 @@
       background-color: #00ceed * 1.2
  
    
-    
+  
 
   &--simple
+
+  &--fluid
+    width: 100%
 
 +cm("Typography")
 .hidden-accessible
@@ -130,6 +134,11 @@
   z-index: 9999
   padding: 21px 0 21px
 
+  &__buy
+    min-width: 250px
+    position: relative
+    margin-top: 45px
+
 
 +comment("section intro style")
 
@@ -146,6 +155,8 @@
   @media screen and (min-height: 480px)
     height: 100vh
 
+
+
 .text 
   color: #ffffff
   font: 400 14px/17px  $main-font
@@ -157,7 +168,9 @@
 .price
   &__new
     margin-right: 28px
-
+  &__text
+    color: #fff
+    font: 400 30px/40px $main-font
 .price-new
   color: #fff
   font: 400 26px/40px $main-font
@@ -188,23 +201,232 @@
     z-index: 1
 
 
-.header__buy
-  min-width: 250px
++comment("section info-block style")
+.info-block
+  padding: 62px
+
+
++comment("section slider style")
+
+
+.carousel-items, .carousel-labels
+  margin: 0
+  padding: 0
+  list-style: none
+  display: block
+
+.carousel-item
+  display: block
+  float: left
+
+.carousel-wrapper
+  width: 100%
   position: relative
-  margin-top: 45px
+  padding-bottom: 55%
+  background-color: none
+  overflow: hidden
+
+.carousel-items
+  width: 300%
+  height: 100%
+  position: absolute
+  left: 0
+  top: 0
+  z-index: 1
+  transition: left .5s ease-out
+  -o-transition: left .5s ease-out
+  -ms-transition: left .5s ease-out
+  -moz-transition: left .5s ease-out
+  -webkit-transition: left .5s ease-out
+
+.carousel-item
+  width: 33.33333333%
+  height: 100%
+  color: white
+
+.carousel-item-blue, .carousel-item-red, .carousel-item-green
+  background-color: none
+
+.carousel-labels
+  position: absolute
+  z-index: 2
+  left: 0
+  bottom: 0
+  height: 20px
+  width: 100%
+  padding: 10px 0
+  text-align: center
+
+.carousel-selector
+  display: none
+
+.carousel-label
+  display: inline-block
+  label
+    width: 10px
+    height: 10px
+    border-radius: 10px
+    background-color: white
+    display: block
+    cursor: pointer
+
+#slide1:checked ~
+  .carousel-items
+    left: 0
+  .carousel-labels .carousel-label:nth-child(1) label
+    background-color: black
+
+#slide2:checked ~
+  .carousel-items
+    left: -100%
+  .carousel-labels .carousel-label:nth-child(2) label
+    background-color: black
+
+#slide3:checked ~
+  .carousel-items
+    left: -200%
+  .carousel-labels .carousel-label:nth-child(3) label
+    background-color: black
+
+.destinations .grid li
+  height: 350px
+  padding: 20px
+  background-clip: content-box
+  background-size: cover
+  background-position: center
+  &.small
+    flex-basis: 30%
+  &.large
+    flex-basis: 70%
+
+@media (max-width: 1100px)
+  .destinations .grid li
+    &.small, &.large
+      flex-basis: 50%
+
+@media (max-width: 800px)
+  .destinations .grid li
+    &.small, &.large
+      flex-basis: 100%
+
++comment("section feedback style")
+
+.feedback
+  padding: 50px 0 30px
+
+.fb-review
+  list-style-type: none 
+  padding-left: 0
+  margin:
+    left: -4px
+    right: -4px
+    bottom: 0
+  display: flex
+  flex-wrap: wrap
+  justify-content: flex-end
+  &__icon
+    color: #e6436e
+  &__item
+    +col(auto)
+    padding:
+      left: 4px
+      right: 4px
+
+
+.fb-text
+  color: #000
+  font: 400 14px/17px  $main-font
+  +r($md)
+    font-size: 16px
+    line-height: 27px
+ 
+
+.fb-heading
+  
+  font: 700 14px/17px  $main-font
+  +r($md)
+    font-size: 18px
+    line-height: 27px
+
+.order
+  background: #000 url(../img/qqq.png) no-repeat scroll 0 0
+  background-size: cover
+  padding: 50px 0
+  &__price
+    text-align: center
+    margin-bottom: 30px
+
+
+
+.form
+  &__wrapper
+    display: flex
+    flex-wrap: wrap
+    margin:
+      left: -15px
+      right: -15px
+  &__group
+    padding:
+      left: 15px
+      right: 15px
+    &--1
+      flex: 0 0 30%
+      max-width: 30%
+    &--2
+      flex: 0 0 45%
+      max-width: 45%
+    &--3
+      flex: 0 0 25%
+      max-width: 25%
+  &__control
+    background-color: transparent
+    border-radius: 0
+    border: 3px solid #00ceed
+    font: 700 14px/17px  $main-font
+    color: #fff
+    padding: 12px 18px
+    
+    &::placeholder
+      color: #fff
+      font: 700 14px/17px  $main-font
+
+  &__submit
+    padding: 11px 18px
+    font-size: 20px
+
+
+.video
+  margin-top: 100px
+  height: 680px
+  &__iframe
+    height: 100%
+    width: 100%
+
   
 
+.delivery
+  color: #fff
+  font: 500 14px/17px  $main-font
+  font-size: 16px
+  line-height: 2
+  padding: 60px 0 
+  background-color: #000
+  display: flex
+  flex-direction: column
+  justify-content: center
+  background-image: url(../img/5123.png)
+  background-size: cover
+  background-position: calc(50% + 54px) 0
+  background-repeat: no-repeat
+  @media screen and (min-height: 480px)
+    height: 100vh
 
 
 
-
-
-
-
-
-
-
-
+.footer
+  padding: 1rem
+  background: #3e4057
+  color: #FFFFFF
 
 
 

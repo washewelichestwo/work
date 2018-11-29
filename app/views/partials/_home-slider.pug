@@ -1,0 +1,26 @@
+section.slider
+.container
+.carousel-wrapper
+  input#slide1.carousel-selector(type='radio', checked='checked', name='carousel-selector')
+  input#slide2.carousel-selector(type='radio', name='carousel-selector')
+  input#slide3.carousel-selector(type='radio', name='carousel-selector')
+  ul.carousel-items
+    li.carousel-item.carousel-item-blue
+      p
+        img(src='img/watchs.png', alt='')
+        |                    
+    li.carousel-item.carousel-item-red
+      p
+        img(src='img/watchs.png', alt='')
+        |       
+    li.carousel-item.carousel-item-green
+      p
+        img(src='img/watchs.png', alt='')
+        |       
+  ul.carousel-labels
+    li.carousel-label
+      label(for='slide1')
+    li.carousel-label
+      label(for='slide2')
+    li.carousel-label
+      label(for='slide3')
